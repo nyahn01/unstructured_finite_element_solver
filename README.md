@@ -1,166 +1,116 @@
-# Finite Element Heat Diffusion Solver
+# Unstructured Finite Element Solver
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![FEniCS](https://img.shields.io/badge/FEniCS-2019.1.0-green.svg)](https://fenicsproject.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.x](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/downloads/)
+[![FEniCS](https://img.shields.io/badge/FEniCS-compatible-green.svg)](https://fenicsproject.org/)
 
-A finite element implementation for solving heat diffusion problems using FEniCS.
+A finite element implementation for solving heat diffusion problems using FEniCS. This project demonstrates the implementation of unsteady heat equations on complex geometries with various boundary conditions.
 
-## Overview
+## Project Description
 
-This repository contains Python implementations of finite element methods for 2D and 3D heat diffusion problems. The project demonstrates progressive complexity through validation cases with analytical solutions, culminating in realistic piston thermal analysis with parallel computing and parameter estimation capabilities.
+This repository contains Python implementations of finite element methods for heat diffusion problems, progressing from simple validation cases to complex 3D applications. The solver supports unstructured meshes, mixed boundary conditions, and includes parallel computing capabilities.
 
-**Key Learning Outcomes:**
-- Implementation of finite element methods using FEniCS
+**Implemented Features:**
+- Heat diffusion equation solver using FEniCS
+- Support for Dirichlet and Neumann boundary conditions
+- 2D and 3D problem capabilities
+- MPI parallelization for large problems
+- Parameter estimation using algorithmic differentiation
 - Validation against analytical solutions
-- Mesh convergence studies and error analysis
-- Parallel computing with MPI domain decomposition
-- Algorithmic differentiation for parameter estimation
 
-## Mathematical Formulation
+## Mathematical Foundation
 
-The solver implements the unsteady heat diffusion equation:
-
+**Governing Equation:**
 ```
-∂T/∂t - α∇²T = 0    in Ω × (0,T]
+∂T/∂t - α∇²T = 0    in Ω
 ```
 
 **Boundary Conditions:**
-- Dirichlet: `T = T_D` (prescribed temperature)
-- Neumann: `-k∇T·n = q` (prescribed heat flux)
+- Dirichlet: T = T_D (prescribed temperature)
+- Neumann: -k∇T·n = q (prescribed heat flux)
 
-**Numerical Method:**
-- Spatial discretization: Galerkin finite element method
-- Temporal discretization: Backward Euler scheme
-- Linear solvers: PETSc direct/iterative methods
+**Discretization:**
+- Spatial: Galerkin finite element method with linear elements
+- Temporal: Backward Euler scheme
+- Weak form implementation using FEniCS variational forms
 
 ## Repository Structure
 
 ```
 code/
-├── case1-2d-square/           # Validation: 2D square with analytical solution
-├── case2-cylinder/            # Validation: concentric cylinders  
-├── case3-rod/                 # Validation: 1D rod with Neumann BC
-├── case4-piston/              # Application: 2D/3D piston thermal analysis
-│   ├── piston-2d/            # 2D piston implementation
-│   └── piston-3d/            # 3D piston with MPI parallelization
-├── case5-algorithmic-diff/    # Parameter estimation using dolfin-adjoint
-└── test-fenics.py            # Installation verification
+├── case1-2d-square/           # 2D square validation case
+│   └── 2d-square.py          # Implementation with analytical solution
+├── case2-cylinder/            # Concentric cylinders case
+│   └── cylinder.py           # Radially symmetric heat conduction
+├── case3-rod/                 # 1D rod with Neumann boundary
+│   └── rod.py                # Heat flux boundary condition test
+├── case4-piston/              # Piston thermal analysis
+│   ├── piston-2d/           # 2D piston implementation
+│   │   └── piston-2d.py
+│   └── piston-3d/           # 3D piston with parallelization
+│       └── piston-3d.py
+├── case5-algorithmic-diff/    # Parameter estimation
+└── test-fenics.py            # Installation verification script
 ```
 
 ## Installation
 
-### Docker (Recommended)
+### Prerequisites
+- Python 3.x
+- FEniCS (2019.1.0 or compatible)
+- NumPy
+- Matplotlib (for visualization)
+
+### Method 1: Docker (Recommended)
 ```bash
-# Install FEniCS via Docker
+# Get FEniCS Docker environment
 curl -s https://get.fenicsproject.org | bash
 
 # Clone repository
-git clone https://github.com/yourusername/unstructured_finite_element_solver.git
+git clone <repository-url>
 cd unstructured_finite_element_solver
 
-# Run in FEniCS container
+# Run in container
 fenicsproject run
 python3 code/test-fenics.py
 ```
 
-### Conda Installation
+### Method 2: Conda
 ```bash
-conda create -n fenics-env -c conda-forge fenics matplotlib numpy
+# Create FEniCS environment
+conda create -n fenics-env -c conda-forge fenics
 conda activate fenics-env
-python code/test-fenics.py  # Should print "Fenics available"
+
+# Verify installation
+python code/test-fenics.py
 ```
 
-## Validation Cases
-
-### Case 1: 2D Square Domain
-**Purpose:** Verify solver implementation with known analytical solution
-
+### Method 3: Native Installation
 ```bash
-cd code/case1-2d-square/
-python 2d-square.py
+# Ubuntu/Debian
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:fenics-packages/fenics
+sudo apt-get update
+sudo apt-get install fenics
+
+# Additional tools (optional)
+sudo apt-get install gmsh paraview
 ```
-
-**Test problem:** `u = 1 + x² + αy² + βt` with `f = β - 2 - 2α`
-- **Mesh:** 8×8 uniform elements (81 nodes)
-- **Time steps:** 20 steps over 2 seconds
-- **Expected result:** Machine precision accuracy
-
-### Case 2: Concentric Cylinders
-**Purpose:** Validate with radially symmetric analytical solution
-
-**Setup:** Inner cylinder (r=0.2) at 5°C, outer cylinder (r=1.0) at 1°C
-- **Mesh:** 3,572 triangular elements
-- **Analytical solution:** `T(r) = T_i - (ln r - ln r_i)(T_i - T_o)/(ln r_o - ln r_i)`
-
-### Case 3: 2D Rod with Heat Flux
-**Purpose:** Test Neumann boundary condition implementation
-
-**Setup:** Constant heat flux on left boundary, insulated elsewhere
-- **Mesh:** 5,220 elements
-- **Analytical solution:** Available in literature
-
-### Case 4: Piston Thermal Analysis
-**Purpose:** Realistic engineering application
-
-**Three subcases:**
-1. **Dirichlet BC:** Fixed temperature (300°C) on top surface
-2. **Neumann BC:** Constant heat flux (2 MW/m²) on top surface  
-3. **Time-varying BC:** Engine cycle heat flux profile
-
-**Material:** Aluminum alloy (α = 5.4×10⁻⁵ m²/s)
-
-**Results:**
-- 2D and 3D solutions show similar temperature distributions
-- Validates potential for 2D approximation of 3D problems
-- Demonstrates solver capability on complex geometries
-
-## Parallel Performance
-
-**Test Case:** 3D Piston (166,681 elements)
-
-| Processors | Runtime (sec) | Speedup | Efficiency |
-|------------|---------------|---------|------------|
-| 1          | 285          | 1.00    | 100%       |
-| 2          | 192          | 1.48    | 74%        |
-| 4          | 138          | 2.06    | 51%        |
-| 8          | 121          | 2.35    | 29%        |
-
-**Key Findings:**
-- Optimal performance with 2-4 processors for this problem size
-- Communication overhead becomes significant beyond 4 processors
-- Domain decomposition works well for structured problems
-
-## Parameter Estimation
-
-**Case 5** demonstrates algorithmic differentiation using dolfin-adjoint:
-
-```python
-# Estimate thermal diffusivity from temperature measurements
-from fenics_adjoint import *
-
-nu = Constant(5.0)  # Initial guess
-control = Control(nu)
-
-# Minimize objective function
-J = assemble(inner(u_reference - u_computed, u_reference - u_computed)*dx)
-dJdnu = compute_gradient(J, control)
-nu_updated = nu - alpha * dJdnu
-```
-
-**Results:**
-- Successfully recovers thermal diffusivity parameters
-- Convergence depends on initial guess and step size selection
-- Validates both forward and adjoint implementations
 
 ## Usage Examples
 
-### Running a Basic Case
+### Case 1: Basic Validation
 ```bash
 cd code/case1-2d-square/
 python 2d-square.py
-# Outputs: solution.pvd (viewable in ParaView)
 ```
+**Expected output:** Convergence to analytical solution with machine precision accuracy
+
+### Case 4: Piston Analysis
+```bash
+cd code/case4-piston/piston-2d/
+python piston-2d.py
+```
+**Output:** Temperature distribution in piston geometry
 
 ### Parallel Execution
 ```bash
@@ -168,66 +118,152 @@ cd code/case4-piston/piston-3d/
 mpirun -n 4 python piston-3d.py
 ```
 
-### Mesh Generation
+### Parameter Estimation
 ```bash
-# Generate mesh with GMSH (if available)
+cd code/case5-algorithmic-diff/
+python square-parameter-estimation.py
+```
+
+## Test Cases
+
+### Case 1: 2D Square Domain
+- **Purpose:** Validate solver with analytical solution
+- **Problem:** u = 1 + x² + αy² + βt
+- **Mesh:** 8×8 uniform grid
+- **Result:** Exact solution recovery
+
+### Case 2: Concentric Cylinders  
+- **Purpose:** Test radially symmetric problems
+- **Geometry:** Inner radius 0.2, outer radius 1.0
+- **Boundary:** Fixed temperatures (inner: 5°C, outer: 1°C)
+- **Validation:** Logarithmic analytical solution
+
+### Case 3: 2D Rod
+- **Purpose:** Validate Neumann boundary conditions
+- **Setup:** Heat flux on left boundary, insulated elsewhere
+- **Solution:** Time-dependent analytical formula available
+
+### Case 4: Piston Thermal Analysis
+- **Purpose:** Complex geometry application
+- **Variants:** 
+  - Subcase 1: Fixed temperature boundary (300°C top)
+  - Subcase 2: Constant heat flux (2 MW/m²)
+  - Subcase 3: Time-varying flux (engine cycle simulation)
+- **Material:** Aluminum alloy properties
+- **Validation:** 2D vs 3D comparison
+
+### Case 5: Parameter Estimation
+- **Purpose:** Demonstrate algorithmic differentiation
+- **Method:** Inverse problem using dolfin-adjoint
+- **Target:** Recover thermal diffusivity from temperature data
+- **Applications:** Both square and piston geometries
+
+## Results Summary
+
+**Validation Accuracy:**
+- All cases converge to analytical solutions where available
+- Mesh convergence studies confirm expected order of accuracy
+- 2D and 3D piston results show consistent temperature patterns
+
+**Parallel Performance (3D Piston, 166,681 elements):**
+- 1 processor: 285 seconds
+- 2 processors: 192 seconds (1.48× speedup, 74% efficiency)
+- 4 processors: 138 seconds (2.06× speedup, 51% efficiency)
+
+**Parameter Estimation:**
+- Successfully recovers diffusion coefficients
+- Convergence depends on initial guess and step size selection
+- Demonstrates both forward and adjoint solver capabilities
+
+## Dependencies and Tools
+
+**Core Dependencies:**
+```
+fenics>=2019.1.0
+numpy
+matplotlib
+```
+
+**Optional Tools:**
+- **GMSH:** Mesh generation
+- **ParaView:** Result visualization (.pvd files)
+- **MPI:** Parallel execution
+- **dolfin-adjoint:** Algorithmic differentiation
+
+**File Formats:**
+- Input: .xml (mesh), .py (solver)
+- Output: .pvd (ParaView), .h5 (HDF5 data)
+
+## Mesh Requirements
+
+**Supported Formats:**
+- FEniCS XML format
+- Convert from GMSH: `dolfin-convert mesh.msh mesh.xml`
+
+**Mesh Generation:**
+```bash
+# Example GMSH workflow
 gmsh -2 geometry.geo -o geometry.msh
 dolfin-convert geometry.msh geometry.xml
 ```
 
-## Dependencies
+## Visualization
 
-**Core Requirements:**
-- FEniCS 2019.1.0+
-- NumPy
-- Matplotlib
-- mpi4py (for parallel execution)
+**ParaView Visualization:**
+```bash
+# Open solution files
+paraview solution.pvd
+```
 
-**Optional:**
-- GMSH (mesh generation)
-- ParaView (visualization)
-- dolfin-adjoint (parameter estimation)
-
-## Known Limitations
-
-- **Geometry complexity:** Limited to simple CAD geometries
-- **Material models:** Only linear, isotropic materials
-- **Boundary conditions:** Basic Dirichlet/Neumann types
-- **Time integration:** First-order backward Euler only
-- **Error estimation:** No adaptive mesh refinement
+**Matplotlib Plots:**
+- Automatically generated during solution process
+- Temperature distributions and convergence plots
+- Error analysis and mesh studies
 
 ## Troubleshooting
 
-**FEniCS installation issues:**
+**Installation Issues:**
 ```bash
-# Test FEniCS installation
+# Test FEniCS
 python code/test-fenics.py
-# Should output: "Fenics available"
+# Should print: "Fenics available"
 ```
 
-**Mesh conversion problems:**
-```bash
-# Convert GMSH mesh to FEniCS format
-dolfin-convert input.msh output.xml
-```
+**Common Problems:**
+- **Mesh import errors:** Ensure proper conversion from GMSH
+- **MPI issues:** Verify mpi4py installation
+- **Memory problems:** Use smaller mesh sizes for large 3D cases
 
-**Parallel execution errors:**
-```bash
-# Verify MPI installation
-mpirun --version
-mpirun -n 2 python -c "from mpi4py import MPI; print('Rank:', MPI.COMM_WORLD.Get_rank())"
-```
+## Technical Notes
 
-## Contributing
+**Time Integration:**
+- Backward Euler scheme for unconditional stability
+- Time step size affects accuracy and stability
+- Convergence studies included in validation cases
 
-This is an academic project, but improvements and extensions are welcome:
-- Bug reports and fixes
-- Additional validation cases
-- Performance improvements
-- Documentation enhancements
+**Boundary Condition Implementation:**
+- DirichletBC for prescribed temperatures
+- Neumann conditions via weak form integrals
+- Mixed boundary types supported
 
-Please open an issue before making significant changes.
+**Parallel Implementation:**
+- Domain decomposition using METIS
+- MPI communication via PETSc
+- Optimal performance typically with 2-4 processors
+
+## Academic Context
+
+The implementation focuses on:
+
+- Systematic validation methodology
+- Progressive complexity in test cases
+- Performance analysis and optimization
+- Integration of advanced features (AD, MPI)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see LICENSE file for details.
+
+## Contact
+
+For questions about this implementation, please open an issue in the repository.
