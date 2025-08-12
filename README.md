@@ -60,7 +60,7 @@ code/
 - NumPy
 - Matplotlib (for visualization)
 
-### Method 1: Docker (Recommended)
+### Method: Docker (Recommended)
 ```bash
 # Get FEniCS Docker environment
 curl -s https://get.fenicsproject.org | bash
@@ -73,29 +73,6 @@ cd unstructured_finite_element_solver
 fenicsproject run
 python3 code/test-fenics.py
 ```
-
-### Method 2: Conda
-```bash
-# Create FEniCS environment
-conda create -n fenics-env -c conda-forge fenics
-conda activate fenics-env
-
-# Verify installation
-python code/test-fenics.py
-```
-
-### Method 3: Native Installation
-```bash
-# Ubuntu/Debian
-sudo apt-get install software-properties-common
-sudo add-apt-repository ppa:fenics-packages/fenics
-sudo apt-get update
-sudo apt-get install fenics
-
-# Additional tools (optional)
-sudo apt-get install gmsh paraview
-```
-
 ## Usage Examples
 
 ### Case 1: Basic Validation
